@@ -1,0 +1,131 @@
+了解です！
+では、新人エンジニア向けに **チェリーピック・リバート・リベース・コンフリクトの流れを図解** でまとめます。
+これを見れば、ブランチ間でどの操作をするとどうなるかが一目でわかります。
+
+---
+
+# **1. ブランチ構造イメージ**
+
+```
+main ────●─────●
+          \
+develop    ●─────●
+           \
+feature     ●───●
+```
+
+* ● = コミット
+* main / develop / feature の三本線を想定
+* feature ブランチで作業した変更を develop に反映したいケース
+
+---
+
+# **2. マージ（merge）の流れ**
+
+```
+feature ────●─────●
+          \
+develop    ●─────●
+
+git checkout develop
+git merge feature
+          ▼
+develop ────●─────●─────●  <- feature の変更が統合
+```
+
+* コンフリクトがあれば `CONFLICT` 表示
+* 修正 → `git add` → `git commit` で解消
+
+---
+
+# **3. リベース（rebase）の流れ**
+
+```
+feature ────●─────●  (古いdevelopを基に作業)
+          \
+develop    ●─────●─────●  (最新状態)
+
+git checkout feature
+git rebase develop
+          ▼
+feature ────●─────●─────●  <- 履歴が最新developの上に置き換わる
+```
+
+* 履歴を整理して、コミットを最新の develop に追従させる
+* コンフリクト時は修正 → `git add` → `git rebase --continue`
+
+---
+
+# **4. チェリーピック（cherry-pick）の流れ**
+
+```
+main ────●─────●─────●
+feature    \
+           ●─────●   <- 特定コミットだけ main に反映
+
+git checkout main
+git cherry-pick <コミットID>
+          ▼
+main ────●─────●─────●─────●
+```
+
+* 特定コミットだけを別ブランチにコピーして適用
+* コンフリクト時は修正 → `git add` → `git cherry-pick --continue`
+
+---
+
+# **5. リバート（revert）の流れ**
+
+```
+main ────●─────●─────●
+            ↑
+          過去コミットを取り消す
+
+git revert <コミットID>
+          ▼
+main ────●─────●─────●─────●  <- 元の変更を打ち消す新しいコミット作成
+```
+
+* 過去のコミットを「打ち消す」形で新しいコミットを作成
+* 履歴は消えず、安全に取り消し可能
+
+---
+
+# **6. コンフリクト発生と解消イメージ**
+
+```
+feature変更:  print("Hello World")
+develop変更: print("Hello TechCommit")
+
+git merge feature もしくは git rebase develop
+          ▼
+CONFLICT発生
+  <<<<<<< HEAD
+  print("Hello TechCommit")
+  =======
+  print("Hello World")
+  >>>>>>> feature
+
+解消方法:
+1. 好きな内容に編集
+   print("Hello World")  # 修正例
+2. git add ファイル名
+3. git commit または git rebase --continue
+```
+
+💡ポイント：
+
+* HEAD = 現在のブランチ
+* ======= = 分割ライン
+* > > > > > > > ブランチ名 = マージ元
+
+---
+
+この図解を覚えると、**ブランチ間操作の結果やコンフリクト発生時の対応** が直感的に理解できます。
+
+---
+
+もし希望であれば、次に **「新人向け Git操作フローチャート（merge / rebase / cherry-pick / revert / conflict 一目で）」** を作り、
+**「どの操作をしたらどうなるか → 正常 / コンフリクト → 対応」** が一枚で分かる形にまとめることもできます。
+
+作りますか？
