@@ -1,0 +1,195 @@
+了解です！
+では、新人エンジニア向けに **Gitのリベース（rebase）、リバート（revert）、コンフリクト** を、**図解＋コマンド＋出力の読み方** で整理します。
+これを読めば、Gitで迷ったときの「どこで何をしているか」が理解できるようになります。
+
+---
+
+# 1. Git Rebase（リベース）
+
+## 1-1. リベースとは
+
+リベースは **ブランチの履歴を別のブランチの先頭に付け替える操作** です。
+
+* ブランチをきれいに整理したいときに使います
+* マージと違って「余計なマージコミットを作らない」
+
+```
+[図解イメージ]
+
+main: A --- B --- C
+feature: D --- E
+
+git rebase main (featureにいる状態)
+
+↓結果
+
+main: A --- B --- C
+feature: D' --- E'  （DとEがCの上に移動）
+```
+
+## 1-2. コマンド例
+
+```bash
+# feature ブランチにいる状態で main の変更を反映させる
+git checkout feature
+git rebase main
+```
+
+## 1-3. 出力の読み方（コンフリクト発生時）
+
+```text
+First, rewinding head to replay your work on top of it...
+Applying: add login form
+Using index info to reconstruct a base tree...
+CONFLICT (content): Merge conflict in main.py
+```
+
+* **Applying: add login form** → 再適用中のコミット名
+* **CONFLICT (content)** → コンフリクト発生
+* → ファイルに `<<<<<<< HEAD` が出現、修正後に
+
+```bash
+git add 修正ファイル
+git rebase --continue
+```
+
+* 全ての衝突を解消したら rebase 完了
+
+---
+
+# 2. Git Revert（リバート）
+
+## 2-1. リバートとは
+
+リバートは **特定のコミットを取り消す新しいコミットを作る** 操作です。
+
+* 過去の変更を巻き戻したいときに使う
+* 安全に履歴を残したまま取り消せる
+
+```
+[図解イメージ]
+
+main: A --- B --- C --- D
+# Dを取り消したい
+
+git revert D
+
+結果:
+main: A --- B --- C --- D --- D'  （Dの変更を打ち消す新しいコミット）
+```
+
+## 2-2. コマンド例
+
+```bash
+git revert コミットID
+# 例: git revert a1b2c3d
+```
+
+## 2-3. 出力の読み方
+
+```text
+[develop a1b2c3d] Revert "add login form"
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+```
+
+* **Revert "..."** → 取り消したコミットのメッセージ
+* **1 file changed, 5 insertions(+), 3 deletions(-)** → 差分の内容
+
+---
+
+# 3. コンフリクト発生時の読み方
+
+## 3-1. マージ / リベースでのコンフリクト例
+
+```text
+Auto-merging main.py
+CONFLICT (content): Merge conflict in main.py
+Automatic merge failed; fix conflicts and then commit the result.
+```
+
+* **Auto-merging main.py** → 自動マージしようとしたファイル
+* **CONFLICT (content)** → 内容が衝突
+* **Automatic merge failed** → 自動でマージできなかった
+
+## 3-2. ファイル内の表示
+
+```text
+<<<<<<< HEAD
+print("Hello from develop")
+=======
+print("Hello from feature")
+>>>>>>> feature
+```
+
+* `<<<<<<< HEAD` → 現在のブランチの変更
+* `=======` → 境界線
+* `>>>>>>> feature` → マージ対象のブランチの変更
+
+### 修正方法
+
+1. どちらを残すか決める（もしくは両方残す）
+2. 不要行を削除
+3. 保存してステージング
+
+```bash
+git add main.py
+# マージの場合
+git commit -m "コンフリクト解消"
+# リベースの場合
+git rebase --continue
+```
+
+---
+
+# 4. まとめ図解
+
+```
+[マージ/リベースの流れ]
+
+main: A --- B --- C
+feature: D --- E
+
+# コンフリクト発生
+<<<<<<< HEAD
+Bの変更
+=======
+Dの変更
+>>>>>>> feature
+
+# 解消後
+main: A --- B --- C
+feature: D --- E (修正済)
+```
+
+```
+[リバートの流れ]
+
+main: A --- B --- C --- D
+git revert D
+main: A --- B --- C --- D --- D'  (Dを打ち消す新しいコミット)
+```
+
+---
+
+# 5. ポイントまとめ
+
+| 操作               | 使う時          | コマンド                | 出力読み方                                      |
+| ---------------- | ------------ | ------------------- | ------------------------------------------ |
+| rebase           | ブランチ履歴を整理    | `git rebase ブランチ名`  | Applying: … → 適用中、CONFLICT → 衝突            |
+| revert           | 過去のコミットを取り消す | `git revert コミットID` | Revert "..." → 取り消したコミット、差分表示              |
+| merge / conflict | マージ中に衝突      | `git merge ブランチ名`   | CONFLICT → 衝突、<<<<<<< HEAD 〜 >>>>>>> で内容確認 |
+
+---
+
+💡 **新人向けアドバイス**
+
+* リベースは履歴整理、リバートは変更取り消し
+* コンフリクトは焦らず、HEAD とマージ対象を確認
+* 迷ったら `git status` で状態確認
+
+---
+
+希望であれば、これを **「図解で一目でわかる Git 操作フローチャート」** にして、
+ブランチ・リベース・リバート・コンフリクトの流れを一枚で理解できる図も作れます。
+
+作りますか？
