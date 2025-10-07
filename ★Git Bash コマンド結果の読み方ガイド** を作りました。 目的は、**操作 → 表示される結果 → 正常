@@ -1,0 +1,154 @@
+了解です！
+新人エンジニア向けに **Git Bash コマンド結果の読み方ガイド** を作りました。
+目的は、**操作 → 表示される結果 → 正常/異常 → 対応** が一目で分かるようにすることです。
+
+---
+
+# **Git Bash コマンド結果読み方ガイド（新人向け）**
+
+---
+
+## **1. ブランチ確認**
+
+```bash
+git branch
+git branch -a
+```
+
+### **結果の見方**
+
+| 表示例                                   | 読み方            | 正常/異常 | 対応                                   |
+| ------------------------------------- | -------------- | ----- | ------------------------------------ |
+| `* main`                              | 現在 `main` ブランチ | 正常    | なし                                   |
+| `  develop`                           | 他ブランチ存在        | 正常    | なし                                   |
+| `error: pathspec 'xxx' did not match` | 指定ブランチ存在しない    | 異常    | ブランチ名確認 / 新規作成 `git checkout -b xxx` |
+
+---
+
+## **2. 作業状態確認**
+
+```bash
+git status
+```
+
+### **結果の見方**
+
+| 表示例                                     | 読み方                  | 正常/異常 | 対応              |
+| --------------------------------------- | -------------------- | ----- | --------------- |
+| `Changes not staged for commit:`        | ファイル変更済みだが add していない | 注意    | `git add ファイル名` |
+| `Changes to be committed:`              | add 済み、次の commit 可能  | 正常    | commit 実行       |
+| `nothing to commit, working tree clean` | 作業完了                 | 正常    | なし              |
+
+---
+
+## **3. コミット**
+
+```bash
+git commit -m "変更内容"
+```
+
+### **結果の見方**
+
+| 表示例                                     | 読み方         | 正常/異常 | 対応              |
+| --------------------------------------- | ----------- | ----- | --------------- |
+| `[main 123abc] メッセージ`                   | コミット成功、履歴追加 | 正常    | `git log` で確認   |
+| `nothing to commit, working tree clean` | add していない   | 異常    | `git add ファイル名` |
+
+---
+
+## **4. リモート操作（push / pull）**
+
+```bash
+git push
+git pull
+```
+
+### **結果の見方**
+
+| 表示例                               | 読み方                  | 正常/異常 | 対応                               |
+| --------------------------------- | -------------------- | ----- | -------------------------------- |
+| `Everything up-to-date`           | push 成功 / 最新         | 正常    | なし                               |
+| `To <url> ... [new branch]`       | 新規ブランチ push 成功       | 正常    | なし                               |
+| `error: failed to push some refs` | リモートに更新あり            | 異常    | `git pull` → コンフリクト解消 → 再 push   |
+| `CONFLICT (content)`              | pull / merge 時コンフリクト | 異常    | ファイル修正 → add → commit / continue |
+
+---
+
+## **5. マージ**
+
+```bash
+git merge feature/xxx
+```
+
+### **結果の見方**
+
+| 表示例                                           | 読み方   | 正常/異常 | 対応                                  |
+| --------------------------------------------- | ----- | ----- | ----------------------------------- |
+| `Merge made by the 'recursive' strategy.`     | マージ成功 | 正常    | なし                                  |
+| `CONFLICT (content): Merge conflict in ファイル名` | マージ衝突 | 異常    | 修正 → `git add ファイル名` → `git commit` |
+
+---
+
+## **6. リベース / チェリーピック / リバート**
+
+```bash
+git rebase develop
+git cherry-pick <コミットID>
+git revert <コミットID>
+```
+
+### **結果の見方**
+
+| 表示例                                | 読み方             | 正常/異常 | 対応                                                                                                   |
+| ---------------------------------- | --------------- | ----- | ---------------------------------------------------------------------------------------------------- |
+| `Successfully rebased and updated` | リベース成功          | 正常    | なし                                                                                                   |
+| `Applying: メッセージ`                  | cherry-pick 適用中 | 正常    | なし                                                                                                   |
+| `Revert "メッセージ"`                   | リバート成功          | 正常    | なし                                                                                                   |
+| `CONFLICT`                         | コンフリクト発生        | 異常    | 修正 → add → continue (`git rebase --continue`, `git cherry-pick --continue`, `git revert --continue`) |
+
+---
+
+## **7. コンフリクト解消の基本フロー**
+
+```bash
+git status              # どのファイルがコンフリクトか確認
+# ファイル編集
+git add ファイル名
+git commit              # mergeの場合
+git rebase --continue   # rebaseの場合
+git cherry-pick --continue # cherry-pickの場合
+git revert --continue   # revertの場合
+```
+
+ポイント：
+
+* HEAD / ======= / >>>>>>> を確認して編集
+* 編集後 add → commit / continue
+* `git status` で clean を確認
+
+---
+
+## **💡 新人向けチェックリスト**
+
+* [ ] ブランチ確認 → `git branch`
+* [ ] 作業状態確認 → `git status`
+* [ ] add → commit → `git log`
+* [ ] リモート反映 → `git push`
+* [ ] 更新取得 → `git pull`
+* [ ] マージ / リベース / チェリーピック / リバート → 正常 / コンフリクト対応
+* [ ] コンフリクト解消 → ファイル修正 → add → commit / continue
+
+---
+
+このガイドを印刷すれば、**Git Bash のコマンド実行結果を見たときに「正常/異常」「次の対応」を即判断**できます。
+
+---
+
+希望であれば、私はこれを **A4一枚の図解フロー版** にして、
+
+* 「操作 → 結果 → 正常/異常 → 対応」を矢印で視覚化
+* 色分けで一目で分かる
+
+形式にもできます。
+
+作りますか？
