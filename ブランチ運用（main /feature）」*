@@ -1,0 +1,314 @@
+いいね！それでは **「ブランチ運用（main / feature）」** と **「トラブル再現＆リカバリー演習（Git Bashでの読み方・操作）」** を、新人エンジニア向けに丁寧にまとめます。実際に手を動かして練習できるよう、再現コマンドと recovery 手順も細かく書きます。🛠️
+
+# ブランチ運用（main / feature） — 基本と推奨フロー
+
+目的：main は常にデプロイ可能（安定）な状態に保ち、機能開発は短命の feature ブランチで行う。
+
+1. **役割**
+
+   * `main`：プロダクション（本番）に近い安定ブランチ。通常は保護（force push禁止、PR必須）します。
+   * `feature/*`：個別機能や修正。短命（例：`feature/login-123`）にして、マージ後は削除。
+
+2. **ブランチ命名例**
+
+   * `feature/ISSUE-123-login-form`
+   * `fix/typo-readme`
+   * `hotfix/production-urgent`
+
+3. **推奨ワークフロー（GitHub Flowの簡易版）**
+
+   * `main` → 最新を pull（`git checkout main` → `git pull origin main`）
+   * `git checkout -b feature/<name>`（ローカルブランチ作成・切替）
+   * 開発・小まめに `git add` `git commit`
+   * リモートへ `git push -u origin feature/<name>`
+   * GitHub で Pull Request 作成 → レビュアーとレビュー
+   * CI通ったらマージ（Squash or Mergeなどチームルールに従う）
+   * マージ後、不要ならブランチを削除（`git branch -d feature/...` と `git push origin --delete feature/...`）
+
+4. **最初に使うコマンド（よく見る流れ）**
+
+```bash
+# main の最新を取得
+git checkout main
+git pull origin main
+
+# 新しいブランチ作成
+git checkout -b feature/login-123
+
+# 変更をステージ・コミット
+git add .
+git commit -m "Add login form"
+
+# 初回 push（upstream 設定）
+git push -u origin feature/login-123
+```
+
+---
+
+# Git Bash の出力の読み方（よく見るメッセージ）
+
+* `On branch main` → 現在のブランチ
+* `Your branch is up to date with 'origin/main'.` → リモートと同期済み
+* `Your branch is ahead of 'origin/main' by 1 commit.` → ローカルに push してないコミットあり
+* `Untracked files:` → Git に無視されていないが未追加のファイル
+* `Changes not staged for commit:` → 変更はあるが `git add` してない
+* `All conflicts fixed but you are still merging.` → コンフリクトを直して `git add` 後に `git commit` が必要
+* `You are in 'detached HEAD' state.` → コミットハッシュを直接チェックアウトしている（注意）
+
+---
+
+# マージ vs リベース（簡単に）
+
+* `merge`：履歴にマージコミットが残る（履歴が分岐してマージされた形）。
+* `rebase`：自分のコミットを main の先頭へ「付け替える」 → 履歴が真っ直ぐに（過去を書き換える）。
+* **ルール**：公開済み（push済み）のブランチは基本 `rebase` で履歴を書き換えないか、やるなら `--force-with-lease` を使う（慎重に）。
+
+---
+
+# トラブル再現＆リカバリー演習（ケース別・コマンド付き）🚑
+
+> **注意**：`reset --hard` や `push --force` は履歴を書き換える危険な操作です。実行前に `git status` / `git log` / `git reflog` を必ず確認し、チームに共有してから行ってください。安全第一！
+
+---
+
+## 演習 1 — マージコンフリクトを発生させて解決する
+
+**再現コマンド（ローカルで練習可）**
+
+```bash
+mkdir git-practice && cd git-practice
+git init
+echo "hello" > file.txt
+git add file.txt
+git commit -m "init"
+git branch -M main
+
+# 作業A
+git checkout -b feature/A
+echo "hello from A" > file.txt
+git commit -am "change by A"
+
+# 作業B
+git checkout main
+git checkout -b feature/B
+echo "hello from B" > file.txt
+git commit -am "change by B"
+
+# feature/A に feature/B をマージしてみる（衝突発生）
+git checkout feature/A
+git merge feature/B
+```
+
+**期待される出力**：`CONFLICT (content): Merge conflict in file.txt` など。
+
+**解決手順**
+
+1. ファイルを開く（Git は自動で衝突マーカーを入れる）
+
+   ```
+   <<<<<<< HEAD
+   hello from A
+   =======
+   hello from B
+   >>>>>>> feature/B
+   ```
+2. 自分で正しい内容に編集（例：`hello from A and B`）
+3. `git add file.txt`
+4. `git commit`（マージコミットが作成される）
+5. `git push`（必要なら）
+
+> VSCode を使うなら conflict 編集 UI が便利：`code .` → エディタで選んで保存 → `git add` → `git commit`
+
+---
+
+## 演習 2 — main に誤ってコミットした（まだ push していない場合）
+
+**状況**：誤って `main` にコミットしてしまった（未 push）。
+
+**安全な回復法（コミットを feature ブランチに移す）**
+
+```bash
+# 現在 main にいる想定
+git branch feature/mistaken-commit   # 今のコミットを基に feature ブランチ作成
+git reset --hard HEAD~1              # main を1コミット戻す（作業を消すので注意）
+# もし origin/main と差分があれば `git reset --hard origin/main` を使う
+```
+
+> `reset --hard` はワーキングツリーの変更も消すので注意。消したくない場合は `git reset --soft HEAD~1`（コミットだけ外す）を使う。
+
+**既に push してしまった場合**
+
+* **安全に**：`git branch feature/mistaken-commit`（commit を別ブランチに確保） → `git revert <コミット>` で main 上に打ち消しコミットを作る → `git push`。
+* **強硬に消す**（チーム合意がある場合のみ）： `git reset --hard <修正前コミット>` → `git push --force-with-lease origin main`（非常に危険）。
+
+---
+
+## 演習 3 — 間違ってブランチを消した（ローカル／リモート）
+
+**ローカルで `git branch -d feature/old` をして消した**
+
+```bash
+git reflog            # どのコミットがそのブランチの先端だったか探す
+# 見つけたハッシュ abc123 を使って
+git branch restore-feature abc123
+```
+
+**リモートで削除されているがリモートに残っている場合**
+
+```bash
+git fetch origin
+git checkout -b feature/old origin/feature/old
+```
+
+**もしどこにも情報がなければ**：他のメンバーのローカルや GitHub の PR（マージされていればコミットは main にある）を確認。
+
+---
+
+## 演習 4 — 直近のコミットを取り消したい（ローカル）
+
+* コミットだけ取り消して作業は残す：
+
+```bash
+git reset --soft HEAD~1
+```
+
+* コミット＆作業ツリーまで完全に取り消す（**危険**）：
+
+```bash
+git reset --hard HEAD~1
+```
+
+* ステージだけ外す（作業はそのまま）：
+
+```bash
+git reset HEAD file.txt
+```
+
+---
+
+## 演習 5 — Pushedしたコミットを取り消す（安全な方法）
+
+**安全（履歴を書き換えない）**：
+
+```bash
+git revert <コミットハッシュ>
+git push origin main
+```
+
+`revert` は「そのコミットの打ち消しコミット」を作るので、協力的で安全。
+
+**履歴を消したい（チーム合意がある場合）**：
+
+```bash
+git reset --hard <戻したいハッシュ>
+git push --force-with-lease origin main
+```
+
+→ `--force-with-lease` は他人の追記を上書きしていないか確認するので `--force` より安全。
+
+---
+
+## 演習 6 — rebase が途中で失敗した／やめたい
+
+```bash
+# rebase 中に衝突が発生したら、修正 → git add file → git rebase --continue
+# 途中でやめたい（元に戻す）
+git rebase --abort
+```
+
+---
+
+## 演習 7 — detached HEAD になった（コミットしてしまった場合の救済）
+
+```bash
+# detached HEAD のままコミットしてしまったら
+git log --oneline -n 5
+# 現在のコミットハッシュを確認して
+git checkout -b save-my-work <そのハッシュ>   # 新しいブランチを作って保存
+```
+
+---
+
+# 便利な確認コマンド（デバッグ時の基本セット）
+
+```bash
+git status
+git diff                 # 作業ツリーの差分（まだステージしていない）
+git diff --staged        # ステージされた差分
+git log --oneline --graph --all --decorate
+git reflog               # HEAD の移動履歴。消えたコミット復活に超有用
+git show <commit>        # コミットの内容を表示
+git remote -v
+git branch -av
+```
+
+---
+
+# 実践練習スクリプト（そのままコピーして Git Bash で試せる）
+
+> **注**：作業はローカルで行われます。既存のリポジトリには影響しないディレクトリで実行してください。
+
+```bash
+# 作業用ディレクトリで実行
+mkdir ~/git-practice && cd ~/git-practice
+git init
+echo "line0" > file.txt
+git add .
+git commit -m "init"
+
+# 作業A
+git checkout -b feature/A
+echo "A" > file.txt
+git commit -am "A change"
+
+# 作業B
+git checkout main
+git checkout -b feature/B
+echo "B" > file.txt
+git commit -am "B change"
+
+# ここで feature/A に feature/B をマージ（衝突を体験）
+git checkout feature/A
+git merge feature/B || echo "conflict happened, check file.txt"
+
+# リセット練習（戻す）
+git reset --hard HEAD~1
+```
+
+上のスクリプトで出た出力やファイルの状態を見ながら、`git status` / `git log --oneline --graph --all` を実行して理解を深めましょう。
+
+---
+
+# 安全に作業するためのベストプラクティス（新人向け）
+
+* **小さく頻繁にコミット＆push**：問題発生時に戻しやすい。
+* **main は保護**：ローカルで `main` に直接コミットしない。必ず feature ブランチで作業。
+* **push前に `git status` と `git log --oneline -n 5` を確認**。
+* **大事な操作（reset, force push）の前にブランチをバックアップ**：
+
+  ```bash
+  git branch backup-before-reset
+  ```
+* **`--force-with-lease` を使う**：`--force` より安全。
+* **`git reflog` を味方につける**：誤操作からの最強の助っ人。
+
+---
+
+# まとめ（短いチートシート）
+
+* 新ブランチ作成：`git checkout -b feature/name`
+* push 初回：`git push -u origin feature/name`
+* pull：`git pull origin main`
+* マージ：`git merge feature/name`
+* リベース：`git rebase origin/main`
+* コンフリクト解消：編集 → `git add` → `git commit`（または `git rebase --continue`）
+* 取り消し（安全）：`git revert <hash>`
+* 取り消し（履歴書き換え）：`git reset --hard <hash>` → `git push --force-with-lease`
+* 失ったコミットの捜索：`git reflog`
+
+---
+
+必要なら、今から **「練習用の Git Bash スクリプト（さらに詳しい練習シナリオ：マージコンフリクト、rebase 失敗、誤 push の復旧）」** をフルで作って差し上げます。コマンドをそのままコピーして実行できる形で出しますが、実行前に注意点も明記します。
+どれを優先してほしいですか？（例：`コンフリクト練習スクリプト`／`誤push復旧スクリプト`／`resetとreflog復旧スクリプト`）✨
+
+（答えやすいように候補を出しました — そのままやってほしいものを選んでください）
