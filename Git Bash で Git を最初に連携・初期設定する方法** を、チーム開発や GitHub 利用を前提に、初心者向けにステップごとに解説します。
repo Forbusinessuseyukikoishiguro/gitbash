@@ -1,0 +1,134 @@
+わかりました、友季子さん！😊
+では **Git Bash で Git を最初に連携・初期設定する方法** を、チーム開発や GitHub 利用を前提に、初心者向けにステップごとに解説します。
+
+---
+
+# Git Bash + Git 初期設定（GitHub 連携）
+
+## 1. Git がインストールされているか確認
+
+```bash
+git --version
+```
+
+* バージョンが表示されれば OK
+* 表示されない場合は [Git公式サイト](https://git-scm.com/) からインストール
+
+---
+
+## 2. ユーザー情報を設定（初回のみ）
+
+Git コミットに使う **名前とメールアドレス** を設定します。
+※ GitHub に公開される情報なので注意
+
+```bash
+git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+```
+
+確認：
+
+```bash
+git config --global --list
+```
+
+出力例：
+
+```
+user.name=Your Name
+user.email=you@example.com
+```
+
+---
+
+## 3. GitHub と SSH キーで連携する（推奨）
+
+1. SSH キー作成（存在しない場合）
+
+```bash
+ssh-keygen -t ed25519 -C "you@example.com"
+```
+
+* 保存場所はデフォルトで OK
+* パスフレーズは任意
+
+2. SSH エージェント起動
+
+```bash
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519
+```
+
+3. 公開鍵を GitHub に登録
+
+```bash
+cat ~/.ssh/id_ed25519.pub
+```
+
+* 表示された文字列を GitHub の **Settings → SSH and GPG keys → New SSH key** に貼り付け
+
+4. 接続テスト
+
+```bash
+ssh -T git@github.com
+```
+
+* 成功すると以下のように表示されます：
+
+```
+Hi username! You've successfully authenticated, but GitHub does not provide shell access.
+```
+
+---
+
+## 4. GitHub リポジトリと連携
+
+### 既存リポジトリをクローンする場合
+
+```bash
+git clone git@github.com:username/repo.git
+cd repo
+```
+
+### 新規リポジトリを作る場合
+
+```bash
+mkdir myproject
+cd myproject
+git init
+git remote add origin git@github.com:username/myproject.git
+```
+
+---
+
+## 5. 最初のコミット
+
+```bash
+git add .
+git commit -m "Initial commit"
+git push -u origin main
+```
+
+* `-u origin main` は **このブランチをデフォルトとしてプッシュ先を設定** するオプションです
+
+---
+
+## 6. 確認ポイント
+
+* `git status` → 現在の状態を確認
+* `git branch` → ブランチを確認
+* `git log --oneline --graph` → 履歴を確認
+
+---
+
+💡 **ポイント**
+
+* チーム開発では、最初にユーザー情報と SSH キーを設定しておくと、プッシュ・プルで毎回認証を入力する必要がなくなります
+* GitHub の HTTPS URL でも連携できますが、SSH が便利です
+* `git config --global` は PC 全体で有効。プロジェクト単位なら `--local` を使います
+
+---
+
+希望であれば、私が **Git Bash 初期設定＋GitHub 連携のチートシート（画面例付き）** を作って、これ一枚で新人でもすぐ設定できる形にまとめることもできます。
+
+作りますか？
