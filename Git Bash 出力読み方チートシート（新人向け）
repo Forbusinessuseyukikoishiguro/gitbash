@@ -1,0 +1,203 @@
+了解です！
+では、新人エンジニア向けに **Git Bash コマンド出力の読み方チートシート（図解付き）** を作ります。
+これを見れば、Git Bash を触ったときの結果の意味がすぐ理解できるようになります。
+
+---
+
+# Git Bash 出力読み方チートシート（新人向け）
+
+## 1. `git status` の出力例
+
+```bash
+On branch develop
+Your branch is ahead of 'origin/develop' by 1 commit.
+Changes not staged for commit:
+        modified:   main.py
+Untracked files:
+        test.txt
+```
+
+| 出力                                                   | 読み方                     |
+| ---------------------------------------------------- | ----------------------- |
+| On branch develop                                    | 現在のブランチは `develop`      |
+| Your branch is ahead of 'origin/develop' by 1 commit | ローカルの方がリモートより1コミット進んでいる |
+| Changes not staged for commit                        | 変更はあるけど `git add` していない |
+| Untracked files                                      | Gitにまだ認識されていない新しいファイル   |
+
+```
+[図解イメージ]
+develop (現在ブランチ)
+ ├─ main.py (変更あり)
+ └─ test.txt (未追跡)
+```
+
+---
+
+## 2. `git diff` の出力例
+
+```diff
+diff --git a/main.py b/main.py
+index e69de29..d95f3ad 100644
+--- a/main.py
++++ b/main.py
+@@ -0,0 +1,3 @@
++print("Hello Git!")
+```
+
+| 記号  | 読み方         |
+| --- | ----------- |
+| +   | 追加された行      |
+| -   | 削除された行      |
+| --- | 元のファイル（変更前） |
+| +++ | 変更後のファイル    |
+
+```
+[図解イメージ]
+main.py
+   + print("Hello Git!") ← 追加された
+```
+
+---
+
+## 3. `git log` の出力例
+
+```text
+commit 3f2b1c4d9a1e6b2f2c7d7d1e4a5c9f2b1a3c4d5e (HEAD -> develop)
+Author: 友季子 <yukiko@example.com>
+Date:   Mon Oct 7 20:00:00 2025 +0900
+
+    add greeting print
+```
+
+| 出力              | 読み方            |
+| --------------- | -------------- |
+| commit 3f2b1c4… | コミットID（識別番号）   |
+| HEAD -> develop | 現在のブランチの最新コミット |
+| Author          | コミットした人        |
+| Date            | コミット日時         |
+| 下の行             | コミットメッセージ      |
+
+```
+[図解イメージ]
+HEAD (現在位置)
+  ↓
+commit: add greeting print
+```
+
+---
+
+## 4. `git branch` の出力例
+
+```text
+* develop
+  feature/login
+  main
+```
+
+| 記号  | 読み方      |
+| --- | -------- |
+| *   | 現在のブランチ  |
+| その他 | 存在するブランチ |
+
+```
+[図解イメージ]
+* develop ← 現在のブランチ
+  feature/login
+  main
+```
+
+---
+
+## 5. コンフリクト時の出力例
+
+```text
+Auto-merging main.py
+CONFLICT (content): Merge conflict in main.py
+Automatic merge failed; fix conflicts and then commit the result.
+```
+
+| 出力                           | 読み方                        |
+| ---------------------------- | -------------------------- |
+| CONFLICT (content)           | 内容が衝突している                  |
+| Automatic merge failed       | 自動マージできなかった                |
+| ファイルに <<<<<<< HEAD 〜 >>>>>>> | どの部分を自分の作業とマージ対象でどう修正するか表示 |
+
+```
+[図解イメージ]
+HEAD ←→ マージ対象ブランチ
+<<<<<<< HEAD
+自分の変更
+=======
+他のブランチの変更
+>>>>>>> feature/login
+```
+
+---
+
+## 6. `git push` / `git pull` の出力例
+
+```text
+To git@github.com:yukiko/project.git
+   3f2b1c4..a1b2c3d  develop -> develop
+```
+
+| 出力                 | 読み方                        |
+| ------------------ | -------------------------- |
+| 3f2b1c4..a1b2c3d   | プッシュしたコミットIDの範囲            |
+| develop -> develop | ローカルdevelopをリモートdevelopに反映 |
+
+---
+
+## 7. `git cherry-pick` の出力例
+
+```text
+[feature 123abc] add login function
+```
+
+| 出力                 | 読み方            |
+| ------------------ | -------------- |
+| [feature 123abc]   | 現在のブランチとコミットID |
+| add login function | 適用したコミットのメッセージ |
+
+---
+
+## 8. 応用Tipsの出力例
+
+### `git log --oneline --graph`
+
+```text
+* a1b2c3d (HEAD -> develop) add greeting
+* 3f2b1c4 feature/login: add login form
+* e5f6g7h main: initial commit
+```
+
+* `*` → コミットの位置
+* `(HEAD -> develop)` → 現在位置
+* 横に線が表示される場合 → ブランチの分岐やマージを視覚化
+
+```
+[図解イメージ]
+main
+ └─ feature/login
+      └─ develop (HEAD)
+```
+
+---
+
+### 💡 まとめポイント
+
+1. **HEAD** → 現在の作業位置
+2. **origin/ブランチ名** → リモートのブランチ
+3. **modified / untracked / staged** → ファイルの状態
+4. **+/-** → 差分の追加・削除
+5. **CONFLICT** → マージ衝突あり
+
+---
+
+このチートシートを見ながら Git Bash を操作すれば、**出力を見て意味が理解できる** ようになります。
+
+---
+
+もし希望なら、このチートシートに **図解入りフローチャート版** を作って、ブランチやマージの流れも視覚的に理解できるようにできます。
+
+作りますか？
