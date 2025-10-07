@@ -1,0 +1,105 @@
+なるほど、「`git log` の見方が分からない」ということですね。
+では、新人エンジニア向けに **`git log` の出力の読み方** を、ステップバイステップで丁寧に解説します。
+
+---
+
+# 1. `git log` の基本
+
+```bash
+git log
+```
+
+これを実行すると、以下のような出力が出ます：
+
+```text
+commit 3f2b1c4d9a1e6b2f2c7d7d1e4a5c9f2b1a3c4d5e (HEAD -> develop)
+Author: 友季子 <yukiko@example.com>
+Date:   Mon Oct 7 20:00:00 2025 +0900
+
+    add greeting print
+```
+
+---
+
+# 2. 各行の意味
+
+| 行                 | 説明                                  |
+| ----------------- | ----------------------------------- |
+| commit 3f2b1c4…   | **コミットID**（この変更を一意に識別する番号）          |
+| (HEAD -> develop) | **現在のブランチと位置** HEADは今の作業中の最新コミットを指す |
+| Author: 友季子 <…>   | **コミットした人**                         |
+| Date: …           | **コミット日時**                          |
+| 下の空行とその後          | **コミットメッセージ**（何を変更したか説明）            |
+
+---
+
+# 3. `git log --oneline` で簡単表示
+
+```bash
+git log --oneline
+```
+
+出力例：
+
+```text
+3f2b1c4 add greeting print
+e5f6g7h initial commit
+```
+
+* **先頭の文字列** → 短いコミットID（省略版）
+* **後ろの文字列** → コミットメッセージ
+
+💡 見やすくて、履歴をざっと確認したいときに便利です。
+
+---
+
+# 4. `git log --graph` で視覚化
+
+```bash
+git log --oneline --graph --all --decorate
+```
+
+出力例：
+
+```text
+* 3f2b1c4 (HEAD -> develop) add greeting print
+* e5f6g7h (feature/login) add login form
+* a1b2c3d main: initial commit
+```
+
+* `*` → コミット
+* `(HEAD -> develop)` → 現在のブランチ位置
+* 横の線（表示される場合） → ブランチやマージの流れ
+
+```
+[図解イメージ]
+main
+ └─ feature/login
+      └─ develop (HEAD)
+```
+
+---
+
+# 5. まとめ（`git log` の読み方）
+
+1. **commit ID** → そのコミットの一意識別番号
+2. **HEAD** → 今の作業位置（最新コミット）
+3. **ブランチ名** → 現在どのブランチにいるか
+4. **Author / Date** → 誰がいつ変更したか
+5. **メッセージ** → どんな変更か
+6. `--oneline` / `--graph` → 見やすく表示するオプション
+
+---
+
+💡 ポイント：
+
+* コミットIDは cherry-pick や reset などで指定する
+* HEAD がどこにあるかを見れば「今自分がどのコミットにいるか」が分かる
+* 視覚的に分かる `--graph` を使うとブランチの流れも理解しやすい
+
+---
+
+希望であれば、**新人向け「図解 Git ログフロー」」** を作って、
+ブランチ・マージ・HEAD の位置・コミットメッセージを一目で理解できる図にまとめることもできます。
+
+作りますか？
