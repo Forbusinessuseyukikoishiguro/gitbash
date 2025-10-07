@@ -1,0 +1,174 @@
+了解です！
+では、新人向けに **Git Bash 結果確認ガイド** を作りました。
+
+* 操作ごとにコマンド例を **コピー＆ペースト** して実行可能
+* 結果の見方・正常／異常時対応も明記
+* 印刷して机上で使える形式
+
+---
+
+# **Git Bash 結果確認ガイド（コピー＆ペースト用）**
+
+---
+
+## **1. ブランチ・状態確認**
+
+```bash
+# 現在のブランチを確認
+git branch
+
+# ローカル＋リモート両方確認
+git branch -a
+
+# 作業状態確認
+git status
+
+# 履歴確認（簡易）
+git log --oneline
+```
+
+### **結果確認ポイント**
+
+* `git branch` → 現在のブランチに `*` が付く
+* `git status` →
+
+  * `Changes not staged for commit` → add していない変更
+  * `Changes to be committed` → add 済み、コミット可能
+  * `nothing to commit, working tree clean` → 作業完了
+
+---
+
+## **2. ファイル追加・コミット**
+
+```bash
+# ステージング
+git add file.py
+
+# コミット
+git commit -m "変更内容説明"
+```
+
+### **結果確認ポイント**
+
+* `git log --oneline` で最新コミットが反映される
+* エラー例
+
+  * `nothing to commit, working tree clean` → add していない
+  * コマンド入力ミス → 再確認
+
+---
+
+## **3. リモート操作**
+
+```bash
+# リモートにプッシュ（初回）
+git push -u origin ブランチ名
+
+# 既存ブランチ
+git push
+
+# リモート更新を取得
+git pull
+```
+
+### **結果確認ポイント**
+
+* 正常 → `up-to-date`, `Everything up-to-date`
+* 異常 → `error: failed to push some refs` → `git pull` 後再 push
+
+---
+
+## **4. ブランチ操作・マージ**
+
+```bash
+# ブランチ切替
+git checkout develop
+
+# 新規ブランチ作成
+git checkout -b feature/xxx
+
+# マージ
+git merge feature/xxx
+```
+
+### **結果確認ポイント**
+
+* 正常 → `Merge made by the 'recursive' strategy.`
+* コンフリクト → `CONFLICT (content): Merge conflict in ファイル名`
+
+  * 対応 → ファイル修正 → `git add ファイル名` → `git commit`
+
+---
+
+## **5. リベース / チェリーピック / リバート**
+
+```bash
+# リベース
+git checkout feature/xxx
+git rebase develop
+# コンフリクト時
+# git rebase --continue
+
+# チェリーピック
+git checkout develop
+git cherry-pick <コミットID>
+# コンフリクト時
+# git cherry-pick --continue
+
+# リバート
+git revert <コミットID>
+# コンフリクト時
+# git revert --continue
+```
+
+### **結果確認ポイント**
+
+* 正常 → コマンド実行後、履歴に反映される
+* 異常 / コンフリクト → `CONFLICT` 表示 → ファイル修正 → add → continue
+
+---
+
+## **6. コンフリクト解消フロー**
+
+```bash
+git status              # コンフリクトファイル確認
+# ファイル編集
+git add ファイル名
+git commit              # mergeの場合
+# または
+git rebase --continue   # rebaseの場合
+git cherry-pick --continue # cherry-pickの場合
+git revert --continue   # revertの場合
+```
+
+### **ポイント**
+
+1. HEAD / ======= / >>>>>>> を確認して編集
+2. 編集後 add → commit / continue
+3. `git status` で clean 確認
+
+---
+
+## **💡 新人向けチェックリスト**
+
+* [ ] ブランチ確認 → `git branch`
+* [ ] 作業状態 → `git status`
+* [ ] コミット履歴 → `git log --oneline`
+* [ ] リモート反映 → `git push`
+* [ ] 更新取得 → `git pull`
+* [ ] マージ・リベース・チェリーピック・リバート → 正常/コンフリクト対応
+
+---
+
+これを印刷して机上に置けば、**Git Bash での操作 → 結果確認 → 正常/異常対応** を一目で確認できます。
+
+---
+
+希望であれば、私はこのガイドを **A4一枚のフルカラー図解＋チェックリスト版** にして、
+
+* 各操作を矢印付きで視覚化
+* 「操作 → 正常/異常 → 対応」まで一枚で分かる形
+
+にまとめることもできます。
+
+作りますか？
