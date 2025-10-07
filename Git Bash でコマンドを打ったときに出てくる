@@ -1,0 +1,117 @@
+なるほど、「Git Bash でコマンドを打ったときに出てくる結果（出力）の読み方」を知りたいのですね。
+では、新人エンジニア向けに主要コマンドの **出力の意味・読み方** をステップごとに解説します。
+
+---
+
+# 1. `git status` の出力
+
+```bash
+On branch develop
+Your branch is ahead of 'origin/develop' by 1 commit.
+  (use "git push" to publish your local commits)
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   main.py
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        test.txt
+```
+
+* **On branch develop** → 現在のブランチ名は `develop`
+* **Your branch is ahead of 'origin/develop' by 1 commit** → リモートよりローカルの方が1コミット進んでいる
+* **Changes not staged for commit** → 変更はあるけど `git add` していない
+* **Untracked files** → Gitにまだ認識されていない新しいファイル
+
+---
+
+# 2. `git diff` の出力
+
+```diff
+diff --git a/main.py b/main.py
+index e69de29..d95f3ad 100644
+--- a/main.py
++++ b/main.py
+@@ -0,0 +1,3 @@
++print("Hello Git!")
+```
+
+* `---` → 元のファイル（変更前）
+* `+++` → 変更後のファイル
+* `@@ -0,0 +1,3 @@` → 何行目が変更されたかの情報
+* `+` → 追加行
+* `-` → 削除行
+
+💡 見方：`+` は追加、`-` は削除
+
+---
+
+# 3. `git log` の出力
+
+```text
+commit 3f2b1c4d9a1e6b2f2c7d7d1e4a5c9f2b1a3c4d5e (HEAD -> develop)
+Author: 友季子 <yukiko@example.com>
+Date:   Mon Oct 7 20:00:00 2025 +0900
+
+    add greeting print
+```
+
+* **commit 3f2b1c4…** → コミットID（識別番号）
+* **HEAD -> develop** → 現在のブランチの最新コミット
+* **Author** → コミットした人
+* **Date** → コミット日時
+* 下の行 → コミットメッセージ
+
+---
+
+# 4. `git branch` の出力
+
+```text
+* develop
+  feature/login
+  main
+```
+
+* `*` がついているブランチ → 現在のブランチ
+* その他は存在するブランチ
+
+---
+
+# 5. コンフリクト発生時の出力例
+
+```text
+Auto-merging main.py
+CONFLICT (content): Merge conflict in main.py
+Automatic merge failed; fix conflicts and then commit the result.
+```
+
+* **CONFLICT (content)** → 内容が衝突している
+* **Automatic merge failed** → 自動マージできなかった
+* → ファイル内の `<<<<<<< HEAD` から `>>>>>>>` の間を修正する必要あり
+
+---
+
+# 6. `git push` や `git pull` の出力例
+
+```text
+To git@github.com:yukiko/project.git
+   3f2b1c4..a1b2c3d  develop -> develop
+```
+
+* **3f2b1c4..a1b2c3d** → プッシュしたコミットIDの範囲
+* **develop -> develop** → ローカルdevelopをリモートdevelopにプッシュした
+
+---
+
+💡 ポイントまとめ
+
+* Gitの出力は **現在の状態や差分を説明してくれるメッセージ**
+* **HEAD** → 今の作業中の位置
+* **origin/ブランチ名** → リモートのブランチ
+* **modified / untracked / staged** → ファイルの状態
+
+---
+
+もし希望なら、Git Bash の **主要コマンドとその出力をすべて図解付きで一覧表** にして、新人でもすぐ理解できるチートシートも作れます。
+
+作ってほしいですか？
