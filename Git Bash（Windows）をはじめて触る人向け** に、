@@ -1,0 +1,322 @@
+了解です、友季子さん！🐰
+以下は **Git Bash（Windows）をはじめて触る人向け** に、ローカルでのコミット → リモート（GitHub）へプッシュ → PR（プルリクエスト）作成 → マージ、そしてよくあるトラブルの対処までを **ステップバイステップ** でまとめた実務的なガイドです。コマンド/出力の読み方も丁寧に書きます。ひとつずつ手を動かしながら進めてください。
+
+# Git Bash ＆ GitHub 基本フロー（超ざっくり）
+
+1. ローカルで変更（ファイル編集）
+2. `git add` → `git commit`（変更を保存・履歴化）
+3. 新しいブランチを作って `git push -u origin <branch>`（リモートにアップ）
+4. GitHub上で Pull Request を作成 → レビュー → マージ
+5. ローカルを `git pull` して同期、不要ブランチを削除
+
+---
+
+# 前提チェック（最初にやること）
+
+Git と SSH が動くか確認：
+
+```bash
+git --version
+ssh -T git@github.com    # SSH認証済みなら "Hi username! You've successfully authenticated." と出る
+```
+
+※ HTTPSでやる場合は `git clone https://github.com/...` を使います（パスワードではなくトークンが必要になることが多い）。
+
+---
+
+# ステップ1：リポジトリを用意（既存を使うか新規）
+
+A. **既存のリモートをクローンする**
+
+```bash
+git clone git@github.com:あなたのユーザー名/リポ名.git
+cd リポ名
+```
+
+B. **ローカルで新規作成してリモート追加する**
+
+```bash
+mkdir myproj && cd myproj
+git init
+# ファイル作る
+echo "# myproj" > README.md
+git add .
+git commit -m "initial commit"
+git branch -M main
+git remote add origin git@github.com:あなた/リポ名.git
+git push -u origin main
+```
+
+---
+
+# ステップ2：新しい作業ブランチを作る（推奨）
+
+直接 `main` で作らず feature ブランチを作る：
+
+```bash
+git checkout -b feature/your-feature-name
+# 例: git checkout -b feature/login-form
+```
+
+読み方：`checkout -b` = 「ブランチを作って切り替える」
+
+---
+
+# ステップ3：変更 → add → commit（基本の流れ）
+
+1. ファイル編集（エディタで保存）
+2. ステージング（コミット対象にする）
+
+```bash
+git add ファイル名          # 単一ファイル
+git add .                  # カレント配下の変更を全部追加
+```
+
+3. コミット（履歴を残す）
+
+```bash
+git commit -m "実装: ログインフォーム追加"
+```
+
+よく見る `git commit` の出力例：
+
+```
+[feature/login-form 1a2b3c4] 実装: ログインフォーム追加
+ 2 files changed, 20 insertions(+)
+```
+
+意味：ブランチ名、コミットハッシュの先頭、変更行数が表示される。
+
+---
+
+# ステップ4：リモートへ push（初回は upstream を設定）
+
+```bash
+git push -u origin feature/your-feature-name
+```
+
+読み方：
+
+* `origin` = 既定のリモート名（GitHub側リポジトリ）
+* `-u` は「このブランチを origin/<branch> に関連付ける（以降は `git push` だけでよい）」
+
+期待される出力例（要点）：
+
+```
+Enumerating objects: ... done.
+Counting objects: ... done.
+Writing objects: ... done.
+remote: Resolving deltas: ... done.
+To git@github.com:あなた/リポ名.git
+ * [new branch]      feature/your-feature-name -> feature/your-feature-name
+Branch 'feature/your-feature-name' set up to track 'origin/feature/your-feature-name'.
+```
+
+---
+
+# ステップ5：GitHubで Pull Request（PR）を出す（ブラウザ操作）
+
+1. GitHub にアクセス → 該当リポジトリを開く
+2. 「Compare & pull request」ボタンをクリック（push直後に出ることが多い）
+3. タイトル・説明を書く（何を変えたか、レビューで見てほしい点を一言）
+4. Reviewers（レビュアー）を指定 → Create Pull Request
+5. CI（自動テスト）が通るのを待つ → コメント/修正依頼が来たら修正して push（同じブランチにコミットして push すれば PR に反映される）
+
+**補足（CLIで作る場合）**：`gh` CLI が入っていれば `gh pr create --fill` で作れますが、初心者はブラウザ操作で大丈夫。
+
+---
+
+# ステップ6：PRをマージする（GitHub上での一般的な手順）
+
+* マージ方法の選択例：
+
+  * **Merge commit**（デフォルト）: マージコミットを作る → 履歴が分岐してても分かりやすい
+  * **Squash and merge**: 全コミットを1つにまとめる → 履歴をスッキリ
+  * **Rebase and merge**: 自分のコミット群を main の先頭に付け替える
+* 「Merge pull request」ボタンを押す（チームルールに従う）
+* マージ後、GitHub上で `Delete branch`（リモートブランチ削除）をすることが多い
+
+---
+
+# ステップ7：ローカルを main に戻して同期、不要ブランチを削除
+
+```bash
+git checkout main
+git pull origin main         # リモート main の最新を取り込む
+
+# ローカルの feature ブランチを削除
+git branch -d feature/your-feature-name
+
+# リモートブランチを消す（既に GitHub 上で消したけどローカルからも消したい場合）
+git fetch -p                 # -p は削除されたリモートブランチ情報を掃除
+# もしくは: git push origin --delete feature/your-feature-name
+```
+
+---
+
+# Git Bash の出力の読み方（よく見るもの）
+
+* `On branch feature/xxx` → 今いるブランチ
+* `Your branch is up to date with 'origin/main'.` → ローカルとリモートが同じ
+* `Your branch is ahead of 'origin/main' by 1 commit.` → ローカルに push していないコミットがある
+* `Untracked files:` → git の管理対象になっていない新しいファイル（`git add`で追加）
+* `Changes not staged for commit:` → ファイルは変更されたが `git add` していない
+* `CONFLICT (content): Merge conflict in file.txt` → マージ時にコンフリクト発生、手動で修正が必要
+
+---
+
+# よくあるトラブルと対処（エラー文と対応コマンド）🚑
+
+### 1) `Permission denied (publickey)` または `Permission denied (publickey). fatal: Could not read from remote repository.`
+
+**原因**：SSH鍵が GitHub に登録されていない／ssh-agent に鍵が登録されていない
+**対処**：
+
+```bash
+# 鍵があるか確認
+ls ~/.ssh
+# 公開鍵を表示して GitHub に登録（id_ed25519.pub など）
+cat ~/.ssh/id_ed25519.pub
+# もし ssh-agent が必要なら
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519
+```
+
+---
+
+### 2) `fatal: not a git repository (or any of the parent directories): .git`
+
+**原因**：現在のフォルダが Git 管理下ではない
+**対処**：
+
+```bash
+cd /path/to/your/project
+# フォルダで .git がないなら初期化
+git init
+# もしくはクローン先へ移動
+```
+
+---
+
+### 3) `! [rejected]        main -> main (non-fast-forward)` / `failed to push some refs`
+
+**原因**：リモートに新しい変更があって、あなたの履歴と合わない（非fast-forward）
+**対処**：
+
+```bash
+git pull --rebase origin main   # 自分のコミットをリモートの先頭に並べ替える（衝突が出る場合は手動で解決）
+# 衝突解消後
+git push
+```
+
+※ チームルールで `merge` が必要なら `git pull origin main` でもOK（マージコミットが生まれる）。
+
+---
+
+### 4) マージ時のコンフリクト（`CONFLICT` 表示）
+
+**対処**：
+
+1. `git status` で衝突ファイル確認
+2. 該当ファイルをエディタで修正（`<<<<<<<` マーカーを消す）
+3. `git add ファイル`
+4. `git commit`（マージの場合はメッセージが自動で入る）
+5. `git push`（必要なら）
+
+---
+
+### 5) 間違って main にコミットしてしまった（未 push）
+
+**対処**（コミットを feature ブランチに移す）：
+
+```bash
+git branch feature/mistaken    # 現在の commit を基にブランチ作成
+git reset --hard HEAD~1        # main を1コミット戻す（慎重に）
+```
+
+※ 既に push してしまった場合は `git revert` で打ち消すのが安全。
+
+---
+
+### 6) 取り消し（直近コミットを取り消して作業は残したい）
+
+```bash
+git reset --soft HEAD~1   # コミットだけ取り消してステージに戻す
+git reset HEAD file.txt   # ステージ解除（作業は残る）
+```
+
+---
+
+### 7) 失ったコミットを探したい／戻したい
+
+```bash
+git reflog                 # HEAD の移動履歴を見る（誤操作からの復旧に便利）
+# 見つけたハッシュ abc123 を使って
+git checkout -b restore-branch abc123
+```
+
+---
+
+# 便利コマンド（覚えておくと役立つ）
+
+* `git status`：現在の状態確認（超頻出）
+* `git diff`：作業中の差分確認（未ステージ分）
+* `git diff --staged`：ステージ済みの差分
+* `git log --oneline --graph --decorate --all`：履歴を見やすく確認
+* `git branch -av`：ローカル/リモートのブランチ一覧
+* `git remote -v`：リモートURL確認
+* `git reflog`：HEADの履歴（復旧で超重要）
+
+---
+
+# 練習用：ローカルで全部体験するスクリプト（リモート無しでも衝突やresetを学べる）
+
+> 既存の重要なリポジトリで実行しないでください。新しいフォルダで試してください。
+
+```bash
+mkdir ~/git-practice && cd ~/git-practice
+git init
+echo "line0" > file.txt
+git add .
+git commit -m "init"
+
+# branch A
+git checkout -b feature/A
+echo "A" > file.txt
+git commit -am "A change"
+
+# branch B
+git checkout main
+git checkout -b feature/B
+echo "B" > file.txt
+git commit -am "B change"
+
+# merge B into A to force conflict
+git checkout feature/A
+git merge feature/B || echo "conflict happened: check file.txt"
+
+# リフログを見て戻す練習
+git reflog
+```
+
+このスクリプトで `git status` と `git log --oneline --graph --all` を頻繁に見て出力の意味を確認してください。
+
+---
+
+# 最後に（ベストプラクティス）
+
+* 小さく・こまめにコミット＆プッシュ（変更を小分けにする）
+* `main` は常に安定に保つ（直接作業しない）
+* `git status` をこまめに見る（迷ったら最初にこれ）
+* 危険コマンド（`reset --hard`, `push --force`）はチームに報告してから実行
+* 失敗しても `git reflog` が味方。慌てないでログを確認する
+
+---
+
+必要なら、次のどれかを **そのまますぐ使える形** で用意します（選んでください）：
+
+* A) 「実践スクリプト（コンフリクト練習、rebase失敗、誤push復旧）」のフルスクリプト
+* B) 「初心者向け一枚ものチートシート（印刷用）」PDF風マークダウン
+* C) 実際のあなたのリポジトリ名を教えてくれれば（またはスクリーンショット）そこに合わせた手順を作る
+
+どれが良いですか？（すぐ作ります）
