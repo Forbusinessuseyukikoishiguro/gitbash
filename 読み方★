@@ -1,0 +1,105 @@
+了解です！
+では、新人エンジニア向けに **Git Bash の操作結果を読み取るコツ** を、正常時・異常時に分けて分かりやすくまとめます。これを押さえておくと、操作後に「うまくいったのか」「何が問題か」を自分で判断できるようになります。
+
+---
+
+# **1. Git Bash 結果の基本の読み方**
+
+Git Bash は **コマンドを打った後に出るメッセージと exit code（終了コード）** で状況がわかります。
+
+* **正常** → メッセージに「success」「done」「up-to-date」などが出る
+* **異常** → メッセージに「error」「conflict」「fatal」が出る
+
+exit code は `echo $?` で確認可能（0 = 正常、0以外 = 異常）
+
+---
+
+# **2. 正常時のメッセージ例（うまくいった場合）**
+
+| コマンド                  | 表示例                                                   | 意味                  |
+| --------------------- | ----------------------------------------------------- | ------------------- |
+| `git status`          | `nothing to commit, working tree clean`               | 作業ディレクトリに未コミットの変更なし |
+| `git add file.py`     | 何も出ない                                                 | ステージング完了            |
+| `git commit -m "msg"` | `[branch_name <ハッシュ>] msg 1 file changed`             | コミット成功              |
+| `git push`            | `To github.com:username/repo.git\n  branch -> branch` | リモートに反映済み           |
+| `git pull`            | `Already up to date.`                                 | 最新状態に更新済み           |
+
+💡ポイント：メッセージが短くすっきりしている場合は「問題なし」です。
+
+---
+
+# **3. 異常時のメッセージ例（うまくいかない場合）**
+
+| コマンド              | 表示例                                             | 意味・対応                                              |
+| ----------------- | ----------------------------------------------- | -------------------------------------------------- |
+| `git push`        | `error: failed to push some refs`               | リモートに先行変更あり → `git pull` 後に再 push                  |
+| `git merge`       | `CONFLICT (content): Merge conflict in file.py` | コンフリクト発生 → ファイル修正 + `git add` + `git commit`       |
+| `git cherry-pick` | `error: could not apply <ハッシュ>`                 | 適用できない変更 → 手動で修正後 `git cherry-pick --continue`     |
+| `git rebase`      | `CONFLICT`                                      | コンフリクト発生 → 修正後 `git add` + `git rebase --continue` |
+| `git clone`       | `fatal: repository not found`                   | リポジトリURL間違い or SSH認証エラー                            |
+| `ssh`             | `Permission denied (publickey)`                 | SSH鍵設定ができていない → 鍵を追加・確認                            |
+
+💡ポイント：
+
+* **CONFLICT/fatal/error** は何か問題がある合図
+* まずは **表示されたファイルやコミットIDを確認** し、指示通り修正・追加・コミット
+
+---
+
+# **4. コマンド別「正常・異常」チェックのコツ**
+
+1. **status**
+
+   * 正常：`nothing to commit`
+   * 異常：未ステージファイルが多く、意図しない変更がある
+2. **log**
+
+   * 正常：自分が追加したコミットが最新に表示される
+   * 異常：コミットが消えた／反映されていない → push漏れ or rebase操作ミス
+3. **push/pull**
+
+   * 正常：`up-to-date` または `branch -> branch`
+   * 異常：error/fatal → リモート差分確認
+4. **merge/rebase/cherry-pick**
+
+   * 正常：変更が適用されコミット完了
+   * 異常：CONFLICT → ファイル修正必須
+
+---
+
+# **5. 図でイメージ（結果の見方）**
+
+```
+コマンド実行
+     │
+     ▼
+[メッセージ確認]
+     │
+ ┌───┴───┐
+ 正常    異常
+  │       │
+  │       ▼
+  │   エラー内容確認
+  │   修正 + add + commit
+  │   再実行
+  ▼
+ 作業完了
+```
+
+---
+
+💡 **新人向けワンポイントアドバイス**
+
+* Git Bash は **メッセージをそのまま読む習慣** をつける
+* 「error/fatal/CONFLICT」が出たら焦らず、まず **何が起きているか理解 → 対応手順実行**
+* 正常時も「up-to-date」「clean」を確認して安心する
+
+---
+
+もし希望であれば、私が **「Git操作別 結果メッセージ早見表」** を作って、
+
+* 正常時／異常時のメッセージ
+* 対応方法
+  を一覧で一目で分かるようにまとめることもできます。
+
+作りますか？
