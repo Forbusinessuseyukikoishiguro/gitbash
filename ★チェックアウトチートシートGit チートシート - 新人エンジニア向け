@@ -1,0 +1,299 @@
+# Git チートシート - 新人エンジニア向け
+
+## 基本コマンド
+
+### ブランチの確認
+```bash
+# 現在のブランチを確認
+git branch
+
+# 全てのブランチを確認（リモート含む）
+git branch -a
+
+# 現在の状態を確認
+git status
+```
+
+### checkout - ブランチ切り替え
+
+```bash
+# 既存のブランチに切り替え
+git checkout branch-name
+
+# 新しいブランチを作成して切り替え
+git checkout -b new-branch-name
+
+# リモートブランチをチェックアウト
+git checkout -b local-branch origin/remote-branch
+
+# 特定のファイルを復元（変更を破棄）
+git checkout -- filename
+
+# 全てのファイルを復元
+git checkout -- .
+```
+
+### switch（Git 2.23以降・推奨）
+
+```bash
+# ブランチ切り替え
+git switch branch-name
+
+# 新規ブランチ作成して切り替え
+git switch -c new-branch-name
+
+# 前のブランチに戻る
+git switch -
+```
+
+### fetch - リモートの情報を取得
+
+```bash
+# 全てのリモートブランチ情報を取得
+git fetch
+
+# 特定のリモートから取得
+git fetch origin
+
+# 特定のブランチのみ取得
+git fetch origin branch-name
+
+# 削除されたリモートブランチの情報も同期
+git fetch --prune
+
+# 取得してマージまで実行（pull）
+git pull origin branch-name
+```
+
+---
+
+## よくあるエラーと解決方法
+
+### エラー 1: 未コミットの変更がある
+```
+error: Your local changes to the following files would be overwritten by checkout:
+    filename
+Please commit your changes or stash them before you switch branches.
+```
+
+**解決方法A: 変更を一時保存（stash）**
+```bash
+git stash              # 変更を一時保存
+git checkout branch-name
+git stash pop          # 変更を復元
+```
+
+**解決方法B: 変更をコミット**
+```bash
+git add .
+git commit -m "作業中の変更"
+git checkout branch-name
+```
+
+**解決方法C: 変更を破棄（注意！）**
+```bash
+git checkout -- .      # 全ての変更を破棄
+git checkout branch-name
+```
+
+### エラー 2: ブランチが見つからない
+```
+error: pathspec 'branch-name' did not match any file(s) known to git.
+```
+
+**解決方法:**
+```bash
+# 1. まずリモート情報を取得
+git fetch origin
+
+# 2. リモートブランチを確認
+git branch -r
+
+# 3. リモートブランチをチェックアウト
+git checkout -b branch-name origin/branch-name
+```
+
+### エラー 3: リモートブランチが削除されている
+```
+error: Your branch is based on 'origin/branch-name', but the upstream is gone.
+```
+
+**解決方法:**
+```bash
+# リモートの最新状態を取得
+git fetch --prune
+
+# 削除されたブランチを確認
+git branch -vv
+
+# 不要なローカルブランチを削除
+git branch -d branch-name
+```
+
+### エラー 4: コンフリクトが発生
+```
+error: Merge conflict in filename
+```
+
+**解決方法:**
+```bash
+# 1. コンフリクトファイルを編集して解決
+# 2. 解決後にadd
+git add filename
+
+# 3. コミット
+git commit
+
+# コンフリクトを中断したい場合
+git merge --abort
+```
+
+### エラー 5: Permission denied（SSH鍵の問題）
+```
+Permission denied (publickey).
+fatal: Could not read from remote repository.
+```
+
+**解決方法:**
+```bash
+# SSH鍵を確認
+ssh -T git@github.com
+
+# HTTPSに変更する場合
+git remote set-url origin https://github.com/username/repo.git
+```
+
+---
+
+## よく使う操作フロー
+
+### パターン1: リモートの最新を取得してマージ
+```bash
+git fetch origin
+git checkout main
+git merge origin/main
+```
+
+または
+
+```bash
+git pull origin main
+```
+
+### パターン2: 新しいブランチで作業開始
+```bash
+# mainブランチを最新にする
+git checkout main
+git pull origin main
+
+# 新しいブランチを作成
+git checkout -b feature/new-feature
+
+# 作業後にプッシュ
+git add .
+git commit -m "新機能を追加"
+git push origin feature/new-feature
+```
+
+### パターン3: 他の人のブランチを確認
+```bash
+# リモート情報を取得
+git fetch origin
+
+# ブランチ一覧を確認
+git branch -r
+
+# チェックアウト
+git checkout -b local-name origin/remote-branch-name
+```
+
+### パターン4: 誤って別のブランチで作業した場合
+```bash
+# 変更をstash
+git stash
+
+# 正しいブランチに切り替え
+git checkout correct-branch
+
+# 変更を復元
+git stash pop
+```
+
+---
+
+## 便利なコマンド
+
+```bash
+# 前のブランチに戻る
+git checkout -
+
+# ブランチの追跡設定を確認
+git branch -vv
+
+# リモートブランチを確認
+git remote show origin
+
+# ログを見やすく表示
+git log --oneline --graph --all
+
+# 差分を確認
+git diff
+
+# コミット前の差分確認
+git diff --staged
+```
+
+---
+
+## 緊急時の対処
+
+### 間違えてファイルを削除・変更した
+```bash
+# 特定ファイルを復元
+git checkout HEAD -- filename
+
+# 全て復元
+git reset --hard HEAD
+```
+
+### コミットを取り消したい
+```bash
+# 直前のコミットを取り消し（変更は残す）
+git reset --soft HEAD^
+
+# 直前のコミットを完全に取り消し
+git reset --hard HEAD^
+```
+
+### stashした内容を確認・削除
+```bash
+# stash一覧
+git stash list
+
+# stashの内容を確認
+git stash show -p stash@{0}
+
+# stashを削除
+git stash drop stash@{0}
+
+# 全てのstashを削除
+git stash clear
+```
+
+---
+
+## チェックリスト
+
+作業前:
+- [ ] `git status` で現在の状態を確認
+- [ ] `git fetch` でリモートの最新情報を取得
+- [ ] `git branch` で正しいブランチにいるか確認
+
+作業後:
+- [ ] `git status` で変更を確認
+- [ ] `git add` で変更をステージング
+- [ ] `git commit` でコミット
+- [ ] `git push` でリモートにプッシュ
+
+困ったら:
+- [ ] `git status
