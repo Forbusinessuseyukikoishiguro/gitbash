@@ -1,0 +1,431 @@
+# Git リモート紐付け完全ガイド
+
+## リモートとは？
+
+**リモート** = GitHub、GitLabなどのサーバー上にあるリポジトリ  
+**ローカル** = 自分のPC上にあるリポジトリ
+
+```
+[GitHub/GitLab]  ←→  [あなたのPC]
+   (リモート)          (ローカル)
+```
+
+---
+
+## 基本コマンド
+
+### リモートの確認
+
+```bash
+# リモートの一覧を表示
+git remote
+
+# リモートの詳細情報（URL付き）
+git remote -v
+
+# 実行結果の例:
+# origin  https://github.com/username/repo.git (fetch)
+# origin  https://github.com/username/repo.git (push)
+```
+
+### リモートの追加
+
+```bash
+# 基本形
+git remote add <リモート名> <URL>
+
+# よく使う例（originという名前で追加）
+git remote add origin https://github.com/username/repo.git
+
+# SSH形式の場合
+git remote add origin git@github.com:username/repo.git
+```
+
+### リモートの削除
+
+```bash
+# リモートを削除
+git remote remove <リモート名>
+
+# 例
+git remote remove origin
+```
+
+### リモートURLの変更
+
+```bash
+# URLを変更
+git remote set-url <リモート名> <新しいURL>
+
+# 例: HTTPSからSSHに変更
+git remote set-url origin git@github.com:username/repo.git
+
+# 例: SSHからHTTPSに変更
+git remote set-url origin https://github.com/username/repo.git
+```
+
+### リモート名の変更
+
+```bash
+# リモート名を変更
+git remote rename <古い名前> <新しい名前>
+
+# 例
+git remote rename origin upstream
+```
+
+---
+
+## シチュエーション別コマンド
+
+### パターン1: 新規プロジェクト（ローカル → リモート）
+
+```bash
+# 1. ローカルでリポジトリを初期化
+git init
+
+# 2. ファイルを追加してコミット
+git add .
+git commit -m "Initial commit"
+
+# 3. GitHubでリポジトリを作成（Webブラウザで操作）
+
+# 4. リモートを追加
+git remote add origin https://github.com/username/repo.git
+
+# 5. ブランチ名をmainに変更（必要に応じて）
+git branch -M main
+
+# 6. プッシュ（初回は-uオプションで紐付け）
+git push -u origin main
+```
+
+### パターン2: 既存プロジェクト（リモート → ローカル）
+
+```bash
+# 1. リモートリポジトリをクローン
+git clone https://github.com/username/repo.git
+
+# 2. ディレクトリに移動
+cd repo
+
+# 3. リモートを確認（自動的にoriginが設定されている）
+git remote -v
+```
+
+### パターン3: フォークしたリポジトリ（複数リモート）
+
+```bash
+# 1. 自分のフォークをクローン
+git clone https://github.com/your-username/repo.git
+cd repo
+
+# 2. オリジナルのリポジトリをupstreamとして追加
+git remote add upstream https://github.com/original-owner/repo.git
+
+# 3. リモートを確認
+git remote -v
+# origin    https://github.com/your-username/repo.git (fetch)
+# origin    https://github.com/your-username/repo.git (push)
+# upstream  https://github.com/original-owner/repo.git (fetch)
+# upstream  https://github.com/original-owner/repo.git (push)
+
+# 4. upstreamから最新を取得
+git fetch upstream
+
+# 5. upstreamの変更をマージ
+git merge upstream/main
+```
+
+---
+
+## ブランチとリモートの紐付け
+
+### 紐付けの確認
+
+```bash
+# 各ブランチの追跡情報を確認
+git branch -vv
+
+# 実行結果の例:
+# * main    abc1234 [origin/main] Latest commit
+#   feature def5678 Fix bug
+```
+
+### ブランチをリモートに紐付け
+
+```bash
+# 現在のブランチをプッシュして紐付け
+git push -u origin <ブランチ名>
+
+# 例: mainブランチを紐付け
+git push -u origin main
+
+# 例: featureブランチを紐付け
+git push -u origin feature-branch
+```
+
+### 紐付けを変更
+
+```bash
+# 別のリモートブランチに紐付けを変更
+git branch --set-upstream-to=origin/<ブランチ名>
+
+# 例
+git branch --set-upstream-to=origin/main
+```
+
+### 紐付けを解除
+
+```bash
+# 紐付けを解除
+git branch --unset-upstream
+```
+
+---
+
+## よくあるエラーと解決方法
+
+### エラー1: リモートが既に存在する
+
+```
+fatal: remote origin already exists.
+```
+
+**解決方法:**
+```bash
+# 既存のリモートを削除してから追加
+git remote remove origin
+git remote add origin https://github.com/username/repo.git
+
+# または、URLを変更
+git remote set-url origin https://github.com/username/repo.git
+```
+
+### エラー2: リモートが見つからない
+
+```
+fatal: 'origin' does not appear to be a git repository
+```
+
+**解決方法:**
+```bash
+# リモートを確認
+git remote -v
+
+# リモートが無ければ追加
+git remote add origin https://github.com/username/repo.git
+```
+
+### エラー3: プッシュが拒否される
+
+```
+error: failed to push some refs to 'origin'
+hint: Updates were rejected because the remote contains work that you do not have locally.
+```
+
+**解決方法:**
+```bash
+# リモートの変更を取得してマージ
+git pull origin main
+
+# コンフリクトがあれば解決後、再度プッシュ
+git push origin main
+```
+
+### エラー4: 上流ブランチが設定されていない
+
+```
+fatal: The current branch main has no upstream branch.
+```
+
+**解決方法:**
+```bash
+# -uオプションで紐付けながらプッシュ
+git push -u origin main
+
+# または
+git branch --set-upstream-to=origin/main
+git push
+```
+
+### エラー5: 認証エラー
+
+```
+remote: Permission denied (publickey).
+fatal: Could not read from remote repository.
+```
+
+**解決方法A: HTTPSに変更**
+```bash
+git remote set-url origin https://github.com/username/repo.git
+```
+
+**解決方法B: SSH鍵を設定**
+```bash
+# SSH鍵を生成（未作成の場合）
+ssh-keygen -t ed25519 -C "your_email@example.com"
+
+# 公開鍵を表示してGitHubに登録
+cat ~/.ssh/id_ed25519.pub
+
+# 接続テスト
+ssh -T git@github.com
+```
+
+---
+
+## 実践的な操作フロー
+
+### フロー1: 毎日の作業開始時
+
+```bash
+# 1. 現在のブランチを確認
+git branch
+
+# 2. mainブランチに移動
+git checkout main
+
+# 3. リモートから最新を取得
+git pull origin main
+
+# 4. 作業用ブランチを作成
+git checkout -b feature/new-feature
+
+# 5. 作業...
+
+# 6. 変更をコミット
+git add .
+git commit -m "Add new feature"
+
+# 7. リモートにプッシュ（初回）
+git push -u origin feature/new-feature
+
+# 8. 2回目以降のプッシュ
+git push
+```
+
+### フロー2: プルリクエストマージ後
+
+```bash
+# 1. mainブランチに移動
+git checkout main
+
+# 2. リモートから最新を取得
+git pull origin main
+
+# 3. 不要なローカルブランチを削除
+git branch -d feature/old-feature
+
+# 4. リモートで削除されたブランチをローカルでも削除
+git fetch --prune
+```
+
+### フロー3: 他の人のブランチを確認
+
+```bash
+# 1. リモートの最新情報を取得
+git fetch origin
+
+# 2. リモートブランチ一覧を確認
+git branch -r
+
+# 3. リモートブランチをチェックアウト
+git checkout -b local-branch-name origin/remote-branch-name
+
+# または（Git 2.23以降）
+git switch -c local-branch-name origin/remote-branch-name
+```
+
+---
+
+## リモートの種類
+
+### origin（最も一般的）
+
+```bash
+# あなたのメインリポジトリ
+git remote add origin https://github.com/your-username/repo.git
+```
+
+### upstream（フォーク元）
+
+```bash
+# フォーク元のオリジナルリポジトリ
+git remote add upstream https://github.com/original-owner/repo.git
+```
+
+### 複数のリモート管理
+
+```bash
+# チーム用
+git remote add team https://github.com/team/repo.git
+
+# デプロイ用
+git remote add production https://production-server.com/repo.git
+
+# 全てのリモートから取得
+git fetch --all
+
+# 特定のリモートにプッシュ
+git push team main
+git push production main
+```
+
+---
+
+## トラブルシューティング
+
+### リモートURLを確認したい
+
+```bash
+# 詳細を確認
+git remote show origin
+
+# 実行結果例:
+# * remote origin
+#   Fetch URL: https://github.com/username/repo.git
+#   Push  URL: https://github.com/username/repo.git
+#   HEAD branch: main
+#   Remote branches:
+#     main    tracked
+#     develop tracked
+```
+
+### リモートとの同期状態を確認
+
+```bash
+# リモートの最新情報を取得（ダウンロードはしない）
+git fetch origin
+
+# ローカルとリモートの差分を確認
+git log origin/main..main  # ローカルが先行
+git log main..origin/main  # リモートが先行
+```
+
+### すべてリセットしてリモートと同じにしたい
+
+```bash
+# ⚠️注意: ローカルの変更が全て消えます
+git fetch origin
+git reset --hard origin/main
+```
+
+---
+
+## チェックリスト
+
+### 初期設定時
+- [ ] `git remote add origin <URL>` でリモートを追加
+- [ ] `git remote -v` で正しく追加されたか確認
+- [ ] `git push -u origin main` で初回プッシュ
+
+### 日常作業
+- [ ] 作業前に `git pull` で最新を取得
+- [ ] `git push` で変更をリモートに反映
+- [ ] `git branch -vv` で紐付け状態を確認
+
+### トラブル時
+- [ ] `git remote -v` でリモートURL確認
+- [ ] `git fetch origin` でリモート情報を取得
+- [ ] エラーメッセージをよく読む
