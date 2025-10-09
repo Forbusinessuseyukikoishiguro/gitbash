@@ -1,0 +1,68 @@
+Git の `checkout` コマンドについて説明しますね！よくあるトラブルと解決方法も含めてお伝えします。
+
+## 基本的な使い方
+
+```bash
+# ブランチを切り替える
+git checkout branch-name
+
+# 新しいブランチを作成して切り替える
+git checkout -b new-branch-name
+
+# 特定のファイルを復元する
+git checkout -- filename
+```
+
+## よくある問題と解決方法
+
+**1. 未コミットの変更があるとき**
+```
+error: Your local changes to the following files would be overwritten by checkout
+```
+
+解決方法:
+```bash
+# 変更を一時保存してから切り替え
+git stash
+git checkout branch-name
+git stash pop  # 変更を戻す
+
+# または、変更をコミットしてから切り替え
+git add .
+git commit -m "作業中の変更"
+git checkout branch-name
+```
+
+**2. ブランチが存在しないとき**
+```
+error: pathspec 'branch-name' did not match any file(s) known to git
+```
+
+解決方法:
+```bash
+# リモートブランチを取得
+git fetch
+
+# リモートのブランチをチェックアウト
+git checkout -b branch-name origin/branch-name
+```
+
+**3. リモートの最新情報が取得できていない**
+```bash
+# まずfetchで最新情報を取得
+git fetch origin
+git checkout branch-name
+```
+
+## 補足: switchコマンド（Git 2.23以降）
+
+最近のGitでは `git switch` の使用が推奨されています:
+```bash
+# ブランチ切り替え
+git switch branch-name
+
+# 新規ブランチ作成
+git switch -c new-branch-name
+```
+
+具体的にどんなエラーが出ていますか？エラーメッセージを教えていただければ、より詳しくサポートできます！
